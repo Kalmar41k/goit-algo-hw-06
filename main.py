@@ -29,6 +29,7 @@
 номерів телефонів або редагування неіснуючого номера.
 """
 from collections import UserDict
+import re
 from typing import Optional
 
 class Field:
@@ -48,14 +49,17 @@ class Name(Field):
 
 class Phone(Field):
     """Клас для зберігання номера телефону, наслідує від Field.
-    
-    Номер телефону обмежений останніми 10 символами.
+    Номер телефону нормалізується та, якщо після нормалізації 
+    він не пройшов перевірку, викликається виняток "ValueError".
     """
 
     def __init__(self, phone: str) -> None:
-        if len(phone) < 10:
+        phone = re.sub(r'\D', '', phone)
+        if phone.startswith('38'):
+            phone = phone[2:]
+        if len(phone) != 10:
             raise ValueError(f"Phone number {phone} is invalid")
-        super().__init__(phone[-10:])
+        super().__init__(phone)
 
 class Record:
     """Клас для зберігання контактної інформації, включаючи ім'я та список телефонів."""
@@ -77,7 +81,7 @@ class Record:
         Викликає ValueError, якщо старий номер не знайдено."""
         for p in self.phones:
             if p.value == old_phone:
-                p.value = new_phone
+                p = Phone(new_phone)
                 return
         raise ValueError(f"Phone number {old_phone} not found.")
 
@@ -113,7 +117,7 @@ book = AddressBook()
 
 # Створення запису для John
 john_record = Record("John")
-john_record.add_phone("1234567890")
+john_record.add_phone("+38123456-7890")
 john_record.add_phone("5555555555")
 
 # Додавання запису John до адресної книги
