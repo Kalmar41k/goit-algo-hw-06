@@ -49,15 +49,10 @@ class Name(Field):
 
 class Phone(Field):
     """Клас для зберігання номера телефону, наслідує від Field.
-    Номер телефону нормалізується та, якщо після нормалізації 
-    він не пройшов перевірку, викликається виняток "ValueError".
-    """
+    Якщо номер телефону не пройшов перевірку на валідність, викликається виняток "ValueError"."""
 
     def __init__(self, phone: str) -> None:
-        phone = re.sub(r'\D', '', phone)
-        if phone.startswith('38'):
-            phone = phone[2:]
-        if len(phone) != 10:
+        if len(phone) != 10 or not phone.isdigit():
             raise ValueError(f"Phone number {phone} is invalid")
         super().__init__(phone)
 
@@ -77,11 +72,12 @@ class Record:
         self.phones = [p for p in self.phones if p.value != phone]
 
     def edit_phone(self, old_phone: str, new_phone: str) -> None:
-        """Редагує існуючий номер телефону на новий. 
-        Викликає ValueError, якщо старий номер не знайдено."""
-        for p in self.phones:
+        """Редагує існуючий номер телефону на новий.
+        Викликає ValueError, якщо старий номер не знайдено або новий номер не є валідним."""
+        for index, p in enumerate(self.phones):
             if p.value == old_phone:
-                p = Phone(new_phone)
+                new_phone_obj = Phone(new_phone)
+                self.phones[index] = new_phone_obj
                 return
         raise ValueError(f"Phone number {old_phone} not found.")
 
@@ -117,7 +113,7 @@ book = AddressBook()
 
 # Створення запису для John
 john_record = Record("John")
-john_record.add_phone("+38123456-7890")
+john_record.add_phone("1234567890")
 john_record.add_phone("5555555555")
 
 # Додавання запису John до адресної книги
@@ -133,7 +129,7 @@ print(book)
 
 # Знаходження та редагування телефону для John
 john = book.find("John")
-john.edit_phone("1234567890", "1112223333")
+john.edit_phone("1234567890", "11122abcde")
 
 print(john)  # Виведення: Contact name: John, phones: 1112223333; 5555555555
 
